@@ -24,8 +24,7 @@
 
 ## 3. Projects
 
-- **[opencoding-agent](https://github.com/j5hjun/opencoding-agent)**: opencode 플러그인으로서 워크플로우 제어 훅(TDD 강제, 계획 돌입 방지)과 서브에이전트 검색 및 fetch 도구를 개발.
-- **[panager](https://github.com/plugagent/panager)**: 디스코드 봇을 통해 구글 일정과 할 일을 관리하는 에이전트를 개발.
+- **[plugagent](https://github.com/j5hjun/plugagent)**: 어떤 LLM과도 연결되고, 모든 대화를 기억하는 메모리 중심 AI 오케스트레이션 에이전트.
 - **[careerbee](https://github.com/100-hours-a-week/3-team-CareerBee-cloud)**: Dev 환경 클라우드 관리를 맡아 Tailscale 네트워크 전환, AWS-GCP VPN 연결, Terraform/Lambda 환경 스케줄링 및 CI/CD 파이프라인을 구축.
 
 ---
