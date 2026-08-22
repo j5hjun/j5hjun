@@ -1,79 +1,99 @@
-# 안녕하세요, AI 에이전트 엔지니어 조혁준입니다
+# 조혁준 | 소프트웨어 엔지니어 포트폴리오
 
-사용자의 실제 작업을 수행할 수 있는 에이전트 하네스와 도구 연결 구조를 만들고 있습니다.
-도구, 스킬, 훅, 에이전트가 예측 가능한 계약 아래에서 동작하도록 설계하는 데 관심이 있습니다.
+백엔드·클라우드·AI Agent를 연결해 실제 동작하는 서비스를 만드는 소프트웨어 엔지니어입니다.
+OAuth 인증 게이트웨이와 커머스 자동화 도구를 개발했으며, AWS·GCP 하이브리드 환경의
+배포·복구·모니터링을 자동화했습니다. 기능 구현에 그치지 않고 테스트, 장애 복구와
+운영 환경까지 함께 설계합니다.
 
-[Email](mailto:johj101159@gmail.com)
-· [GitHub](https://github.com/j5hjun)
-
----
-
-## About
-
-- LLM이 외부 시스템을 안전하고 일관되게 사용할 수 있는 도구 인터페이스를 설계합니다.
-- CLI, MCP, Agent를 분리하면서도 하나의 도구 계약을 공유하는 구조에 관심이 있습니다.
-- 브라우저 자동화, 로컬 상태 관리, 테스트와 배포까지 포함한 실행 가능한 에이전트 시스템을 만들고 있습니다.
+[Email](mailto:johj101159@gmail.com) · [GitHub](https://github.com/j5hjun)
 
 ---
 
-## Selected Projects
+## 주요 역량
+
+| 영역 | 구체적인 경험 |
+| --- | --- |
+| Backend | OAuth 인증, 암호화 토큰 저장, REST API 프록시, PostgreSQL, 계층 분리와 자동화 테스트 |
+| Cloud & DevOps | AWS·GCP 하이브리드 구성, Terraform, CI/CD, 자동 롤백, 통합 모니터링 |
+| AI Agent & Automation | MCP 도구 계약, CLI·MCP 실행 구조 통합, 브라우저 세션 관리, 실패 복구와 실제 계정 검증 |
+
+---
+
+## 프로젝트
+
+### [Growful SmartThings Gateway](./project/growful.md)
+
+**Backend · Integration · DevOps**
+
+SmartThings OAuth 인증부터 토큰 저장, API 프록시와 연결 해제까지 구현한 개인 프로젝트입니다.
+
+- 기간: 2026.07
+- 형태: 개인 프로젝트
+- 역할: 백엔드 설계와 구현, OAuth 연동, 테스트, private beta 배포
+- 결과: OAuth 전체 흐름, 토큰 암호화·교체, `/v1/*` 프록시와 계층별 자동화 테스트 구축
+
+[상세 사례](./project/growful.md) ·
+[Repository](https://github.com/j5hjun/growful) ·
+[Service](https://smartthings.growful.click)
 
 ### [K-Commerce](./project/k-commerce.md)
 
-한국 커머스 작업을 CLI와 MCP 도구로 제공하고, AI 에이전트가 자연어로 실행할 수 있도록 만든 로컬 자동화 프로젝트입니다.
+**AI Agent · Backend · Automation**
+
+쿠팡의 주문, 상품, 장바구니와 리뷰 작업을 CLI와 MCP 도구로 제공한 커머스 자동화
+프로젝트입니다.
 
 - 기간: 2026.06–2026.07
-- 형태: 3인 협업 프로젝트
-- 담당: 프로젝트 기반 구성, CLI·MCP 공통 계약, 로그인과 세션, 주문·상품 자동화, PyPI 배포
-- 기술: Python, FastMCP, FastAPI, LangChain, nodriver
-- 결과: 팀에서 구현한 21개 도구의 실행 계약 통합과 TestPyPI·PyPI 패키지 배포 흐름 구축
+- 형태: 3인 협업
+- 역할: 공통 도구 계약, 로그인과 세션, 주문·상품 자동화, Python 패키지 배포
+- 결과: 팀이 구현한 21개 도구가 CLI와 MCP에서 같은 요청·응답 계약을 사용하도록 통합
 
-[상세 사례 읽기](./project/k-commerce.md)
-· [Repository](https://github.com/j5hjun/k-commerce)
+[상세 사례](./project/k-commerce.md) ·
+[Repository](https://github.com/j5hjun/k-commerce) ·
+[My Pull Requests](https://github.com/j5hjun/k-commerce/pulls?q=is%3Apr+author%3Aj5hjun)
 
 ### [CareerBee Cloud](./project/careerbee-cloud.md)
 
-IT 구직자를 위한 커리어 시각화 서비스의 AWS·GCP 하이브리드 인프라와
-배포·관측 자동화를 구축한 프로젝트입니다.
+**Cloud · DevOps · Observability**
+
+IT 구직자 대상 웹서비스의 AWS와 GCP 하이브리드 개발 환경, 배포 자동화와 모니터링을
+구축한 프로젝트입니다.
 
 - 기간: 2025.03–2025.08
-- 형태: 6인 협업 프로젝트(인프라 2인)
-- 담당: DEV 인프라, AWS–GCP 네트워크, Terraform, CI/CD, 모니터링
-- 기술: AWS, GCP, Terraform, GitHub Actions, Docker, Tailscale
-- 결과: FE·BE·AI 독립 배포와 헬스 체크·롤백, 환경 생성·삭제, 통합 관측 흐름 구축
+- 형태: 6인 협업, 인프라 2인
+- 역할: DEV 인프라, 멀티 클라우드 네트워크, Terraform, CI/CD, 모니터링
+- 결과: 서비스별 배포와 자동 롤백, 환경 생성·삭제·복원, AWS·GCP·GPU 관측 통합
 
-[상세 사례 읽기](./project/careerbee-cloud.md)
-· [Repository](https://github.com/100-hours-a-week/3-team-CareerBee-cloud)
+[상세 사례](./project/careerbee-cloud.md) ·
+[Repository](https://github.com/100-hours-a-week/3-team-CareerBee-cloud) ·
+[My Commits](https://github.com/100-hours-a-week/3-team-CareerBee-cloud/commits/develop/?author=j5hjun)
 
 ---
 
-## Open Source
+## 오픈소스 기여
 
 ### [oh-my-opencode-slim](./project/oh-my-opencode-slim.md)
 
-Gemini 3 Pro 모델 참조를 3.1 Pro 계열로 갱신하고, CLI·설정·테스트·문서의 모델 ID와 표시 이름을 일관되게 수정했습니다.
+사용할 수 없게 된 Gemini 3 Pro 모델 참조를 3.1 Pro 계열로 갱신했습니다. Provider 설정,
+설치 과정, 테스트와 문서를 함께 수정하고 프로젝트 검증 절차를 통과한 뒤 upstream에
+병합했습니다.
 
-[기여 내용](./project/oh-my-opencode-slim.md)
-· [Pull Request](https://github.com/alvinunreal/oh-my-opencode-slim/pull/143)
+[기여 내용](./project/oh-my-opencode-slim.md) ·
+[Pull Request #143](https://github.com/alvinunreal/oh-my-opencode-slim/pull/143)
 
 ---
 
-## Technical Skills
+## 기술
 
 | 분류 | 기술 |
 | --- | --- |
-| Languages | Python, TypeScript |
-| Backend & Agent | FastAPI, FastMCP, LangChain, MCP |
+| Languages | Python, TypeScript, Shell |
+| Agent & AI | MCP, FastMCP, LangChain, OpenAI API |
+| Backend | FastAPI, Fastify, PostgreSQL, Kysely, Zod |
+| Testing | pytest, Vitest, Playwright |
 | Automation | CLI, nodriver, Browser Automation |
-| Cloud | AWS, GCP |
-| Infrastructure | Terraform, Docker |
-| CI/CD | GitHub Actions |
+| Cloud | AWS, GCP, Cloudflare |
+| Infrastructure | Terraform, Docker, Docker Compose, Nginx |
+| CI/CD | GitHub Actions, ECR, PyPI |
 | Observability | Prometheus, Grafana, Loki |
 | Network | Site-to-Site VPN, Tailscale |
-
----
-
-## Contact
-
-- Email: [johj101159@gmail.com](mailto:johj101159@gmail.com)
-- GitHub: [github.com/j5hjun](https://github.com/j5hjun)

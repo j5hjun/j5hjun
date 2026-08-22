@@ -1,210 +1,250 @@
 # CareerBee Cloud
 
-> IT 구직자를 위한 웹서비스의 DEV 환경을 담당하며 AWS·GCP 하이브리드 인프라,
-> 배포 자동화와 관측 환경을 구축했습니다.
+> IT 구직자 대상 웹서비스의 AWS·GCP 하이브리드 개발 환경과 배포·복구·모니터링
+> 자동화를 구축한 프로젝트
 
-[Repository](https://github.com/100-hours-a-week/3-team-CareerBee-cloud)
-· [My Commits](https://github.com/100-hours-a-week/3-team-CareerBee-cloud/commits/develop/?author=j5hjun)
-· [Frontend](https://github.com/100-hours-a-week/3-team-CareerBee-fe)
-· [Backend](https://github.com/100-hours-a-week/3-team-CareerBee-be)
-· [AI](https://github.com/100-hours-a-week/3-team-CareerBee-ai)
+[Repository](https://github.com/100-hours-a-week/3-team-CareerBee-cloud) ·
+[My Commits](https://github.com/100-hours-a-week/3-team-CareerBee-cloud/commits/develop/?author=j5hjun) ·
+[Frontend](https://github.com/100-hours-a-week/3-team-CareerBee-fe) ·
+[Backend](https://github.com/100-hours-a-week/3-team-CareerBee-be) ·
+[AI](https://github.com/100-hours-a-week/3-team-CareerBee-ai)
 
 ---
 
 ## 프로젝트 정보
 
 - 기간: 2025.03–2025.08
-- 인원: 6명
-- 역할: Cloud Engineer, DevOps
-- 담당: DEV 인프라 설계·구축, 배포와 운영 자동화
-- 기술: AWS, GCP, Terraform, GitHub Actions, Docker
+- 인원: 6명, 인프라 담당 2명
+- 분야: Cloud · DevOps · Observability
+- 역할: DEV 인프라 설계와 구축, 배포·복구·모니터링 자동화
+- 핵심 결과: Private Network, 환경 생성·삭제·복원, 서비스별 자동 롤백과 통합 관측 구축
+- 기술: AWS, GCP, Terraform, GitHub Actions, Docker, Nginx
 - 관측: Prometheus, Grafana, Loki, Node Exporter, DCGM Exporter
 - 네트워크: AWS Transit Gateway, GCP HA VPN, Tailscale
 
 ## 프로젝트 배경
 
-CareerBee는 기업 정보와 CS 문제 풀이, AI 이력서와 모의 면접 기능을 제공하는
-IT 구직자 대상 웹서비스입니다.
+CareerBee는 기업 정보, CS 문제 풀이, AI 이력서와 모의 면접 기능을 제공하는 웹서비스입니다.
+Frontend, Backend와 AI 저장소가 분리되어 있었고 각 저장소의 `develop` 브랜치를 실행하는
+DEV 환경과 배포 흐름이 필요했습니다.
 
-애플리케이션은 FE·BE·AI 저장소로 분리되어 있었으며 `main`, `develop`, `feature`
-브랜치 전략을 사용했습니다. 저는 각 저장소의 `develop` 브랜치 코드를 실행하는
-DEV 환경과 배포 흐름을 담당했습니다.
+초기에는 MVP를 빠르게 확인하기 위해 FE, BE와 AI를 하나의 GCP 인스턴스에 배포했습니다.
+이후 AWS 지원 크레딧을 활용하고 GPU가 필요한 AI 서버는 GCP에 유지하기 위해 웹·데이터 계층을
+AWS로 이전했습니다.
 
-초기에는 MVP를 빠르게 제공하기 위해 모든 서비스를 하나의 GCP 인스턴스에 배포했습니다.
-이후 애플리케이션과 데이터 계층을 AWS로 이전하고, GPU가 필요한 AI 서버는 GCP에
-유지하면서 DEV 환경을 3-Tier 하이브리드 구조로 전환했습니다.
-
-## 시스템 구조
+## 인프라 전환
 
 ```mermaid
 flowchart LR
-    FE[FE Repository] -->|develop 변경| Actions[Cloud Repository<br/>GitHub Actions]
-    BE[BE Repository] -->|develop 변경| Actions
-    AIRepo[AI Repository] -->|develop 변경| Actions
-
-    Actions --> Build[Central Docker Build]
-    Build --> ECR[ECR]
-    ECR --> Deploy[Deploy Webhook]
-
-    subgraph AWS
-        ALB[Application Load Balancer]
-        Service[FE / BE Service]
-        DB[(MySQL / Redis)]
-        Infra[Webhook / Prometheus<br/>Grafana / Loki]
-        S3[S3 Backup / Terraform State]
+    subgraph Before[초기 MVP]
+        GCPAll[GCP 단일 인스턴스<br/>FE / BE / AI]
     end
 
-    subgraph GCP
-        AI[GPU AI Server]
+    subgraph After[하이브리드 DEV]
+        ALB[AWS ALB]
+        App[AWS FE / BE]
+        DB[(AWS MySQL / Redis)]
+        AI[GCP GPU AI Server]
+
+        ALB --> App
+        App --> DB
+        App <-->|Site-to-Site VPN| AI
     end
 
-    Deploy --> Service
-    Deploy --> AI
-    ALB --> Service
-    Service <-->|Site-to-Site VPN| AI
-    Service --> DB
-    Infra --> Service
-    Infra --> DB
-    Infra --> AI
-    DB --> S3
+    Before -->|단계적 전환| After
 ```
 
-- 서비스 간 통신은 AWS Site-to-Site VPN과 GCP HA VPN으로 연결했습니다.
-- 운영자 접근은 Tailscale을 사용했습니다.
-- Dockerfile과 이미지 빌드·배포 Workflow는 Cloud 저장소에서 중앙 관리했습니다.
+최종 구조에서는 애플리케이션과 데이터 계층을 AWS에 두고, GPU가 필요한 AI 서버를 GCP에
+유지했습니다. 두 클라우드는 Site-to-Site VPN으로 연결해 Backend와 AI 서버가 Private IP로
+통신하도록 구성했습니다.
 
-## 주요 문제 해결
+## 핵심 기여
 
-### 빠른 MVP 배포와 단계적 인프라 전환
+| 문제 | 구현 | 검증 또는 결과 |
+| --- | --- | --- |
+| AWS와 GCP 서버의 외부 노출 | Transit Gateway와 HA VPN 연결 | Backend와 AI 서버의 Private IP 통신 |
+| 중지 후에도 남는 유휴 비용 | Terraform 생성·삭제와 S3 백업·복원 | DEV 누적 비용을 PROD 대비 약 50%로 관리 |
+| 한 서비스 변경 시 전체 재시작 | 서비스별 배포, 헬스 체크와 롤백 | 실패한 서비스만 이전 이미지로 복구 |
+| 클라우드별로 분리된 지표와 로그 | Prometheus, Grafana, Loki 통합 | AWS·GCP·GPU 상태를 한곳에서 확인 |
+| 반복되는 운영자 VPN 설정 | OpenVPN을 Tailscale로 전환 | 인증서 재배포와 전용 VPN 서버 제거 |
 
-초기에는 제한된 기간 안에 MVP를 제공해야 했습니다. GCP 인스턴스의 네트워크,
-애플리케이션 환경 구성, 배포와 백업 과정을 스크립트로 자동화해 FE·BE·AI를 하나의
-인스턴스에서 빠르게 실행할 수 있도록 구성했습니다.
+## 문제 해결 사례
 
-이후 AWS 지원 크레딧과 GCP GPU 환경을 함께 활용하기 위해 웹·데이터 계층은 AWS로
-이전하고 AI 서버는 GCP에 유지했습니다. 빅뱅 배포에서 역할이 분리된 하이브리드
-DEV 환경으로 단계적으로 전환했습니다.
+### 1. AWS와 GCP의 Private Network 연결
 
-### AWS·GCP Private Network 연결
+**문제**
 
-3-Tier 구조로 전환하면서 공개 인터넷에 있던 서버를 Private Network로 분리해야
-했습니다. AWS의 애플리케이션·데이터 계층과 GCP AI 서버가 외부 노출 없이 통신할 수
-있도록 Transit Gateway와 GCP HA VPN을 연결했습니다.
+3-Tier 구조로 전환하면서 AWS의 애플리케이션·데이터 계층과 GCP AI 서버가 공개 인터넷을
+거치지 않고 통신해야 했습니다.
 
-초기에는 GCP에서 제공하는 Terraform 오픈소스 모듈을 사용했지만, 두 클라우드의
-Gateway·Tunnel·BGP Peer·Route가 완전하게 연결되지 않았습니다. 양쪽 연결 종점과
-Route를 하나씩 확인하고 부족한 구성을 직접 보완해 Site-to-Site VPN 연결을
-완료했습니다.
+**선택과 구현**
 
-이를 통해 Backend와 GCP AI 서버가 Private IP를 이용해 통신하도록 구성했습니다.
+AWS Transit Gateway와 GCP HA VPN을 연결했습니다. 처음 적용한 GCP Terraform 모듈만으로는
+Gateway, Tunnel, BGP Peer와 Route가 모두 연결되지 않아 양쪽 종점과 경로를 하나씩 확인하고
+부족한 구성을 보완했습니다.
 
-### DEV 환경 삭제·복원 자동화
+**검증과 결과**
 
-EC2와 GCE를 중지해도 일부 리소스 비용이 계속 부과됐기 때문에 단순 중지 방식으로는
-유휴 비용을 충분히 줄일 수 없었습니다.
+Backend와 GCP AI 서버가 Private IP로 통신하는 것을 확인했습니다. 운영자가 서버에 접근하는
+경로는 서비스 네트워크와 분리해 Tailscale을 사용했습니다.
 
-Terraform `apply`와 `destroy` Workflow를 구성하고, Lambda가 정해진 시간에 GitHub
-Actions를 호출하도록 구현해 출퇴근 시간에 맞춰 DEV 환경을 생성·삭제했습니다.
+### 2. DEV 환경 생성·삭제·복원 자동화
 
-환경 삭제 전에는 MySQL 데이터, SSL 인증서와 서버 재설정에 필요한 운영 파일을 S3에
-백업했습니다. 환경을 다시 생성할 때 이를 복원해 삭제 전의 개발 상태를 유지했습니다.
+**문제**
 
-예약 시간 외에도 팀원이 환경을 사용할 수 있도록 Workflow를 수동 실행할 수 있게
-했으며, 아이폰 단축어를 통해 팀원이 직접 DEV 서버를 켤 수 있도록 구성했습니다.
+EC2와 GCE를 중지해도 일부 리소스 비용이 계속 발생했습니다. 단순 중지는 사용하지 않는 시간의
+비용을 충분히 줄이지 못했고, 환경을 삭제하면 데이터와 인증서 복원이 필요했습니다.
 
-프로젝트 마감 시점의 누적 DEV 인프라 비용을 PROD 대비 약 50% 수준으로 관리했습니다.
+**선택과 구현**
 
-### OpenVPN을 Tailscale로 전환
+Terraform `apply`와 `destroy` Workflow를 만들고 Lambda가 정해진 시간에 GitHub Actions를
+호출하도록 구성했습니다. 삭제 전에는 MySQL 데이터, SSL 인증서와 재설정에 필요한 파일을 S3에
+백업하고, 다시 생성할 때 복원했습니다.
 
-DEV 환경을 삭제하고 다시 생성할 때마다 OpenVPN 인증서를 재발급하고 팀원에게 배포해야
-했습니다. 또한 운영자 접근만을 위해 별도의 OpenVPN 서버를 유지해야 했습니다.
+예약 시간 밖에는 팀원이 Workflow와 아이폰 단축어로 DEV 서버를 직접 실행할 수 있도록
+했습니다.
 
-운영자 접근 방식을 Tailscale로 전환하고, 인스턴스 생성 과정에서 이전 Tailscale
-상태를 복원하도록 구성했습니다. 이를 통해 인증서를 반복해서 발급하는 과정을 제거하고
-OpenVPN 전용 서버와 관련 리소스를 삭제했습니다.
+**검증과 결과**
 
-### Dockerfile과 배포 Workflow 중앙 관리
+환경을 삭제한 뒤 다시 생성해 데이터와 운영 파일이 복원되는지 확인했습니다. 프로젝트 마감
+시점의 DEV 누적 인프라 비용은 PROD 대비 약 50% 수준으로 관리했습니다. 이 수치는 자동화 적용
+전후의 50% 절감을 의미하지 않습니다.
 
-각 애플리케이션 저장소에서 Dockerfile과 배포 Workflow를 따로 관리하면 공통 배포
-방식을 변경할 때 여러 저장소를 함께 수정해야 했습니다.
+### 3. Dockerfile과 배포 Workflow 중앙 관리
 
-FE·BE·AI 저장소의 변경이 Cloud 저장소의 Workflow를 호출하도록 구성하고, Cloud
-저장소가 각 저장소의 `develop` 브랜치를 Checkout해 이미지를 빌드하도록 변경했습니다.
+**문제**
 
-Dockerfile, ECR Push, 배포와 복구 로직을 Cloud 저장소에서 중앙 관리하면서
-애플리케이션 코드와 인프라 배포 책임을 분리했습니다.
+FE, BE와 AI 저장소가 Dockerfile과 배포 Workflow를 각각 관리하면 공통 배포 방식을 변경할 때
+여러 저장소를 함께 수정해야 했습니다.
 
-### 서비스별 독립 배포와 자동 Rollback
+**선택과 구현**
 
-초기 배포 스크립트는 하나의 서비스만 변경돼도 FE·BE·AI 전체를 재시작했습니다.
-또한 이미지 빌드와 컨테이너 실행 성공만으로는 서비스가 정상이라고 판단할 수
-없었습니다.
+애플리케이션 저장소의 변경이 Cloud 저장소 Workflow를 호출하도록 구성했습니다. Cloud
+저장소가 대상 저장소의 `develop` 브랜치를 Checkout하고 이미지 빌드, ECR Push, 배포와 복구를
+담당하도록 책임을 옮겼습니다.
 
-Webhook이 전달받은 서비스만 배포하도록 수정하고 다음 흐름을 구성했습니다.
+**결과**
 
-1. 배포 전 직전 ECR 이미지 태그 확보
-2. 변경된 서비스의 Docker 이미지 빌드와 ECR Push
+애플리케이션 개발자는 자신의 저장소에서 인프라 배포 로직을 직접 관리하지 않고도 같은 방식으로
+DEV 환경에 배포할 수 있게 됐습니다.
+
+### 4. 서비스별 독립 배포와 자동 롤백
+
+**문제**
+
+초기 배포 스크립트는 한 서비스만 변경돼도 FE, BE와 AI 전체를 재시작했습니다. 이미지 빌드와
+컨테이너 실행 성공만 확인해 실제 Endpoint가 정상인지 판단하지 못했습니다.
+
+**선택과 구현**
+
+Webhook이 전달받은 서비스만 배포하도록 변경하고 다음 순서로 실행했습니다.
+
+1. 배포 전 직전 ECR 이미지 태그 확인
+2. 변경된 서비스의 이미지 빌드와 ECR Push
 3. 대상 서비스만 재배포
 4. Endpoint Health Check 반복
-5. 실패 시 직전 이미지로 Rollback
+5. 실패하면 직전 이미지로 롤백
 6. 배포 결과와 GitHub Actions 로그를 Discord로 전달
 
-이를 통해 FE·BE·AI를 독립적으로 배포하고 실패한 서비스만 이전 버전으로 복구할 수
-있도록 구성했습니다.
+**검증과 결과**
 
-### 멀티 클라우드 관측 환경 중앙화
+FE, BE와 AI를 독립적으로 배포하고 헬스 체크에 실패한 서비스만 이전 이미지로 복구하도록
+구성했습니다. 배포 성공의 기준을 컨테이너 실행이 아니라 Endpoint 응답으로 변경했습니다.
 
-초기 Fluent Bit·Scouter 구성으로는 AWS 서비스·DB 서버와 GCP GPU 서버의 상태와
-로그를 한곳에서 확인하기 어려웠습니다.
+### 5. 멀티 클라우드 모니터링 통합
 
-Prometheus, Grafana와 Loki를 중심으로 관측 환경을 재구성했습니다.
+**문제**
 
-- Node Exporter를 이용한 AWS·GCP 호스트 지표 수집
-- DCGM Exporter를 이용한 GPU 지표 수집
-- Loki를 이용한 시스템·애플리케이션 로그 통합
+기존 Fluent Bit과 Scouter 구성으로는 AWS 서비스·DB 서버와 GCP GPU 서버의 상태와 로그를
+한곳에서 확인하기 어려웠습니다.
+
+**선택과 구현**
+
+- Node Exporter로 AWS와 GCP 호스트 지표 수집
+- DCGM Exporter로 GPU 지표 수집
+- Loki로 시스템·애플리케이션 로그 통합
 - Grafana Data Source와 Dashboard 자동 구성
-- FE·BE·AI·DB·운영 도구의 Health Check 통합
+- FE, BE, AI, DB와 운영 도구의 Health Check 통합
 
-AWS와 GCP의 시스템 지표, GPU 사용량과 애플리케이션 로그를 Grafana에서 함께
-확인할 수 있도록 구성했습니다.
+**결과**
 
-### SSE 연결 문제 해결
+호스트 지표, GPU 사용량, 애플리케이션 로그와 서비스 상태를 하나의 Grafana 환경에서 확인할
+수 있도록 구성했습니다.
 
-Nginx를 거친 SSE 연결이 정상적으로 유지되지 않는 문제가 있었습니다. 일반 HTTP
-요청과 달리 SSE는 연결을 종료하지 않고 응답을 계속 전달해야 하지만 Nginx의 기본
-Buffering과 Timeout 설정이 적용되고 있었습니다.
+### 6. OpenVPN을 Tailscale로 전환
 
-Nginx에 HTTP/1.1, 응답 Buffering 비활성화, `text/event-stream` Header와 긴 Read
-Timeout을 설정했습니다. 이후 ALB의 Idle Timeout도 조정해 실시간 이벤트 스트림
-연결이 유지되도록 해결했습니다.
+**문제**
 
-## 결과
+DEV 환경을 다시 생성할 때마다 OpenVPN 인증서를 발급해 팀원에게 배포해야 했습니다. 운영자
+접근만을 위해 별도 OpenVPN 서버도 유지하고 있었습니다.
+
+**선택과 구현**
+
+운영자 접근을 Tailscale로 전환하고 인스턴스 생성 과정에서 이전 Tailscale 상태를 복원했습니다.
+
+**결과**
+
+인증서 재발급과 배포 과정을 제거하고 OpenVPN 전용 서버와 관련 리소스를 삭제했습니다.
+
+### 7. Nginx와 ALB를 통과하는 SSE 연결
+
+**문제**
+
+Nginx를 거친 SSE 연결에 기본 Buffering과 Timeout이 적용돼 실시간 이벤트 스트림이 유지되지
+않았습니다.
+
+**선택과 구현**
+
+Nginx에 HTTP/1.1, 응답 Buffering 비활성화, `text/event-stream` Header와 긴 Read Timeout을
+적용했습니다. ALB Idle Timeout도 SSE 연결 시간에 맞게 조정했습니다.
+
+**결과**
+
+Nginx와 ALB를 통과한 이후에도 이벤트 스트림 연결이 유지되는 것을 확인했습니다.
+
+## 배포 흐름
+
+```mermaid
+sequenceDiagram
+    participant Repo as FE / BE / AI Repository
+    participant Actions as Cloud GitHub Actions
+    participant ECR as Amazon ECR
+    participant Service as Target Service
+    participant Discord as Discord
+
+    Repo->>Actions: develop 변경 전달
+    Actions->>ECR: 이미지 빌드와 Push
+    Actions->>Service: 변경된 서비스만 배포
+    Actions->>Service: Endpoint Health Check
+    alt 정상
+        Actions->>Discord: 배포 성공 알림
+    else 실패
+        Actions->>Service: 이전 이미지로 Rollback
+        Actions->>Discord: 실패와 Rollback 알림
+    end
+```
+
+## 검증 범위
+
+| 범위 | 확인 내용 |
+| --- | --- |
+| Network | AWS와 GCP의 Tunnel, BGP, Route, Private IP 통신 |
+| Lifecycle | Terraform 생성·삭제, S3 백업과 환경 복원 |
+| Deployment | 서비스별 배포, Endpoint Health Check, 이전 이미지 복구 |
+| Observability | AWS·GCP 호스트, GPU, 로그와 서비스 상태 수집 |
+| Streaming | Nginx와 ALB를 통과하는 SSE 연결 유지 |
+
+## 결과와 현재 범위
 
 - AWS 애플리케이션·데이터 계층과 GCP GPU 서버를 Private Network로 연결했습니다.
-- DEV 환경의 생성·백업·삭제·복원을 자동화하고 팀원이 직접 제어할 수 있도록 했습니다.
-- 프로젝트 마감 시점의 누적 DEV 인프라 비용을 PROD 대비 약 50% 수준으로 관리했습니다.
-- Dockerfile과 배포 Workflow를 Cloud 저장소에서 중앙 관리했습니다.
-- FE·BE·AI의 독립 배포와 Health Check 기반 자동 Rollback을 구현했습니다.
-- AWS·GCP의 시스템 지표, GPU 사용량과 로그를 하나의 Grafana 환경으로 통합했습니다.
-- Nginx와 ALB 설정을 조정해 SSE 연결 문제를 해결했습니다.
+- DEV 환경의 생성, 백업, 삭제와 복원을 자동화했습니다.
+- 서비스별 배포와 Endpoint Health Check 기반 자동 롤백을 구현했습니다.
+- AWS, GCP, GPU 지표와 애플리케이션 로그를 Grafana에 통합했습니다.
+- Tailscale 전환으로 OpenVPN 인증서 배포와 전용 서버 운영을 제거했습니다.
 
-## 배운 점
-
-이미지 빌드와 컨테이너 실행이 성공해도 실제 서비스가 정상이라는 보장은 없었습니다.
-Endpoint Health Check로 배포 결과를 판단하고, 실패 시 이전 ECR 이미지로
-Rollback하도록 구성하면서 배포 자동화에는 실패를 감지하고 복구하는 과정까지
-포함되어야 한다는 점을 배웠습니다.
-
-OpenVPN은 DEV 환경을 다시 생성할 때마다 인증서를 재발급하고 팀원에게 배포해야 하는
-불편함이 있었습니다. Tailscale로 전환해 기존 접속 상태를 복원하고 전용 VPN 서버를
-제거하면서, 인프라 구조를 설계할 때는 기술적 연결뿐 아니라 이를 사용하는 개발자의
-접근 과정과 운영 부담도 함께 고려해야 한다는 점을 배웠습니다.
-
-각 애플리케이션 저장소에서 Dockerfile과 배포 Workflow를 관리하면 공통 배포 방식을
-변경할 때 여러 저장소를 함께 수정해야 했습니다. 이를 Cloud 저장소로 중앙화하면서
-FE·BE·AI 개발자가 자신의 저장소에서 인프라 설정을 직접 관리하지 않아도 동일한
-방식으로 빌드·배포할 수 있었습니다. 공통 관심사를 한곳에서 관리하면 개발자의
-개입을 줄이면서도 팀 전체의 배포 방식을 일관되게 유지할 수 있다는 점을 배웠습니다.
+이 포트폴리오는 CareerBee의 DEV 환경에서 담당한 범위를 설명합니다. PROD 전체 운영이나 실제
+사용자 트래픽에 대한 가용성 결과로 확대해 표현하지 않습니다. 비용 결과도 PROD 대비 DEV 누적
+비용의 비율이며, 자동화 도입 전후의 절감률과 구분합니다.
 
 ---
 

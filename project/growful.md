@@ -1,6 +1,7 @@
 # Growful SmartThings Gateway
 
-> SmartThings OAuth 연결, 암호화 토큰 저장과 API 프록시를 제공하는 인증 게이트웨이
+> SmartThings OAuth 인증부터 토큰 저장, API 프록시와 연결 해제까지 설계·구현하고
+> private beta로 배포한 인증 게이트웨이
 
 [Repository](https://github.com/j5hjun/growful) ·
 [Service](https://smartthings.growful.click) ·
@@ -12,7 +13,9 @@
 
 - 기간: 2026.07
 - 형태: 개인 프로젝트
-- 역할: 백엔드 설계와 구현, 테스트, private beta 배포
+- 분야: Backend · Integration · DevOps
+- 역할: 백엔드 설계와 구현, OAuth 연동, 테스트, private beta 배포
+- 핵심 결과: OAuth 전체 흐름, 토큰 암호화·교체, `/v1/*` 프록시와 계층별 자동화 테스트 구축
 - 기술: TypeScript, Node.js 24, Fastify, PostgreSQL, Kysely, Zod
 - 테스트: Vitest, Playwright
 - 배포: Docker Compose, GitHub Actions, Cloudflare, Tailscale
